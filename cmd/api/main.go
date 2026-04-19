@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
+	"github.com/Harshwagh21/go-redis-api/internal/cache"
 	"github.com/Harshwagh21/go-redis-api/internal/health"
 	"github.com/Harshwagh21/go-redis-api/pkg/redisclient"
 )
@@ -26,7 +27,15 @@ func main() {
 
 	healthHandler := health.NewHandler(redisclient.Client)
 
+	cacheRepo := cache.NewRepository(redisclient.Client)
+	cacheService := cache.NewService(cacheRepo)
+	cacheHandler := cache.NewHandler(cacheService)
+
 	r.GET("/health", healthHandler.HealthCheck)
+
+	r.POST("/cache", cacheHandler.Set)
+	r.GET("/cache/:key", cacheHandler.Get)
+	r.DELETE("/cache/:key", cacheHandler.Delete)
 
 	port := os.Getenv("PORT")
 	if port == "" {
